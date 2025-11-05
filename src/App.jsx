@@ -1024,6 +1024,17 @@ function App() {
     setIsAddingNewCompletedWork(false);
   };
 
+  const handleDeleteCompletedWork = (workId) => {
+    const updatedWorks = completedWorksData.filter(work => work.id !== workId);
+    // Renumber the S.No
+    const renumberedWorks = updatedWorks.map((work, index) => ({
+      ...work,
+      sno: index + 1
+    }));
+    setCompletedWorksData(renumberedWorks);
+    localStorage.setItem('ahuda_completed_works', JSON.stringify(renumberedWorks));
+  };
+
   // Functions for works under progress management
   const handleAddNewProgressWork = () => {
     if (newProgressWorkData.nameOfWork && newProgressWorkData.estCost && newProgressWorkData.remarks) {
@@ -1046,6 +1057,17 @@ function App() {
   const handleCancelAddProgressWork = () => {
     setNewProgressWorkData({ nameOfWork: '', estCost: '', remarks: '' });
     setIsAddingNewProgressWork(false);
+  };
+
+  const handleDeleteProgressWork = (workId) => {
+    const updatedWorks = worksUnderProgressData.filter(work => work.id !== workId);
+    // Renumber the S.No
+    const renumberedWorks = updatedWorks.map((work, index) => ({
+      ...work,
+      sno: index + 1
+    }));
+    setWorksUnderProgressData(renumberedWorks);
+    localStorage.setItem('ahuda_works_under_progress', JSON.stringify(renumberedWorks));
   };
 
   // Functions for land bank management
@@ -1097,6 +1119,17 @@ function App() {
     setIsAddingNewGo(false);
   };
 
+  const handleDeleteGo = (goId) => {
+    const updatedGos = gosData.filter(go => go.id !== goId);
+    // Renumber the S.No
+    const renumberedGos = updatedGos.map((go, index) => ({
+      ...go,
+      sno: index + 1
+    }));
+    setGosData(renumberedGos);
+    localStorage.setItem('ahuda_gos', JSON.stringify(renumberedGos.map(go => ({...go, fileUrl: undefined}))));
+  };
+
   const handleAddNewMemo = () => {
     if (newMemoData.title && newMemoData.memoNumber && newMemoData.date && newMemoData.department && newMemoData.file) {
       const newMemo = {
@@ -1119,6 +1152,13 @@ function App() {
   const handleCancelAddMemo = () => {
     setNewMemoData({ title: '', memoNumber: '', date: '', department: '', description: '', file: null, fileName: '' });
     setIsAddingNewMemo(false);
+  };
+
+  const handleDeleteMemo = (id) => {
+    const filteredMemos = memosData.filter(memo => memo.id !== id);
+    const renumberedMemos = filteredMemos.map((memo, index) => ({ ...memo, sno: index + 1 }));
+    setMemosData(renumberedMemos);
+    localStorage.setItem('ahuda_memos', JSON.stringify(renumberedMemos.map(memo => ({...memo, fileUrl: undefined}))));
   };
 
   const handleFileUpload = (e, type) => {
@@ -1216,6 +1256,28 @@ function App() {
     } else {
       alert(`File not available for ${type === 'budget' ? 'Budget' : 'Audit Report'}: ${item.financialYear || item.auditPeriod}`);
     }
+  };
+
+  const handleDeleteBudget = (budgetId) => {
+    const updatedBudgets = budgetData.filter(budget => budget.id !== budgetId);
+    // Renumber the S.No
+    const renumberedBudgets = updatedBudgets.map((budget, index) => ({
+      ...budget,
+      sno: index + 1
+    }));
+    setBudgetData(renumberedBudgets);
+    localStorage.setItem('ahuda_budget_data', JSON.stringify(renumberedBudgets));
+  };
+
+  const handleDeleteAudit = (auditId) => {
+    const updatedAudits = auditData.filter(audit => audit.id !== auditId);
+    // Renumber the S.No
+    const renumberedAudits = updatedAudits.map((audit, index) => ({
+      ...audit,
+      sno: index + 1
+    }));
+    setAuditData(renumberedAudits);
+    localStorage.setItem('ahuda_audit_data', JSON.stringify(renumberedAudits));
   };
 
   // Functions for RTI Appellate Authorities management
@@ -4999,6 +5061,9 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Est Cost (₹)</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Remarks</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                        {isAuthenticated && (
+                          <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -5015,11 +5080,22 @@ function App() {
                                 Completed
                               </span>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleDeleteCompletedWork(work.id)}
+                                  className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "6" : "5"} className="px-6 py-8 text-center text-gray-500">
                             No completed works available. {isAuthenticated ? 'Add the first work using the button above.' : 'Please contact administrator to add works.'}
                           </td>
                         </tr>
@@ -5150,6 +5226,9 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Est Cost (₹)</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Remarks</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                        {isAuthenticated && (
+                          <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -5166,11 +5245,22 @@ function App() {
                                 In Progress
                               </span>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleDeleteProgressWork(work.id)}
+                                  className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "6" : "5"} className="px-6 py-8 text-center text-gray-500">
                             No works under progress available. {isAuthenticated ? 'Add the first work using the button above.' : 'Please contact administrator to add works.'}
                           </td>
                         </tr>
@@ -5775,6 +5865,9 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Subject</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">G.O No</th>
                         <th className="px-6 py-4 text-center text-sm font-semibold">Download</th>
+                        {isAuthenticated && (
+                          <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -5802,11 +5895,22 @@ function App() {
                                 {go.fileName ? 'Download' : 'PDF'}
                               </button>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleDeleteGo(go.id)}
+                                  className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "5" : "4"} className="px-6 py-8 text-center text-gray-500">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-lg">No Government Orders available.</p>
                             <p className="text-sm mt-2">
@@ -5986,6 +6090,7 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Subject</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Memo No</th>
                         <th className="px-6 py-4 text-center text-sm font-semibold">Download</th>
+                        {isAuthenticated && <th className="px-6 py-4 text-center text-sm font-semibold">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -6013,11 +6118,23 @@ function App() {
                                 {memo.fileName ? 'Download' : 'PDF'}
                               </button>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4 text-center">
+                                <button
+                                  onClick={() => handleDeleteMemo(memo.id)}
+                                  className="inline-flex items-center px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors duration-200"
+                                  title="Delete memo"
+                                >
+                                  <XCircle size={14} className="mr-1" />
+                                  Delete
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "5" : "4"} className="px-6 py-8 text-center text-gray-500">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-lg">No Government Memos available.</p>
                             <p className="text-sm mt-2">
@@ -6307,6 +6424,9 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Financial Year</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Budget Type</th>
                         <th className="px-6 py-4 text-center text-sm font-semibold">Download</th>
+                        {isAuthenticated && (
+                          <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -6333,11 +6453,22 @@ function App() {
                                 {budget.fileName ? 'Download' : 'PDF'}
                               </button>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleDeleteBudget(budget.id)}
+                                  className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "5" : "4"} className="px-6 py-8 text-center text-gray-500">
                             <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-lg">No budget documents available.</p>
                             <p className="text-sm mt-2">
@@ -6503,6 +6634,9 @@ function App() {
                         <th className="px-6 py-4 text-left text-sm font-semibold">Audit Period</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold">Report Type</th>
                         <th className="px-6 py-4 text-center text-sm font-semibold">Download</th>
+                        {isAuthenticated && (
+                          <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -6529,11 +6663,22 @@ function App() {
                                 {audit.fileName ? 'Download' : 'PDF'}
                               </button>
                             </td>
+                            {isAuthenticated && (
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleDeleteAudit(audit.id)}
+                                  className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAuthenticated ? "5" : "4"} className="px-6 py-8 text-center text-gray-500">
                             <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-lg">No audit reports available.</p>
                             <p className="text-sm mt-2">
