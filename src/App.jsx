@@ -32,7 +32,8 @@ import {
   Plus,
   DollarSign,
   Camera,
-  HelpCircle
+  HelpCircle,
+  Search
 } from 'lucide-react';
 import cmPhoto from "./assets/cm.png";
 import ministerPhoto from "./assets/minister-sir.png";
@@ -428,10 +429,13 @@ function App() {
     // Office Staff Section related state variables
     const [showOfficeStaffPage, setShowOfficeStaffPage] = useState(false);
     const [officeStaffData, setOfficeStaffData] = useState([]);
+    const [staffSearchQuery, setStaffSearchQuery] = useState('');
     const [newStaffData, setNewStaffData] = useState({
       name: '',
       designation: '',
-      contactDetails: ''
+      contactDetails: '',
+      image: null,
+      imageUrl: ''
     });  const [showMeetingsDropdown, setShowMeetingsDropdown] = useState(false);
   const [showAuthorityMeetingsPage, setShowAuthorityMeetingsPage] = useState(false);
   const [showExecutiveCommitteePage, setShowExecutiveCommitteePage] = useState(false);
@@ -1337,6 +1341,25 @@ function App() {
   };
 
   // Office Staff Management Functions
+  const handleStaffImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewStaffData({
+          ...newStaffData,
+          image: file,
+          imageUrl: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddStaff = () => {
     if (newStaffData.name && newStaffData.designation && newStaffData.contactDetails) {
       const newStaff = {
@@ -1344,6 +1367,7 @@ function App() {
         name: newStaffData.name,
         designation: newStaffData.designation,
         contactDetails: newStaffData.contactDetails,
+        imageUrl: newStaffData.imageUrl,
         addedDate: new Date().toLocaleDateString(),
         addedBy: currentUser?.name
       };
@@ -1352,7 +1376,7 @@ function App() {
       setOfficeStaffData(updatedStaff);
       localStorage.setItem('officeStaffData', JSON.stringify(updatedStaff));
       
-      setNewStaffData({ name: '', designation: '', contactDetails: '' });
+      setNewStaffData({ name: '', designation: '', contactDetails: '', image: null, imageUrl: '' });
     } else {
       alert('Please fill in all required fields.');
     }
@@ -2144,6 +2168,36 @@ function App() {
                       </div>
                     </div>
 
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Staff Photo (Optional)</label>
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleStaffImageUpload}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Recommended: Square image, max 5MB (JPG, PNG)</p>
+                        </div>
+                        {newStaffData.imageUrl && (
+                          <div className="relative">
+                            <img 
+                              src={newStaffData.imageUrl} 
+                              alt="Preview" 
+                              className="w-24 h-24 object-cover rounded-lg border-2 border-blue-200"
+                            />
+                            <button
+                              onClick={() => setNewStaffData({...newStaffData, image: null, imageUrl: ''})}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <button
                       onClick={handleAddStaff}
                       className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center space-x-2"
@@ -2157,74 +2211,148 @@ function App() {
                 {/* Staff List Section */}
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="px-8 py-6 border-b border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Users className="w-5 h-5 text-blue-600" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-800">Office Staff Directory</h3>
+                          <p className="text-gray-600">Complete list of AHUDA office staff members</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">Office Staff Directory</h3>
-                        <p className="text-gray-600">Complete list of AHUDA office staff members</p>
-                      </div>
+                      
+                      {/* Admin-only Search Bar */}
+                      {isAuthenticated && (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search staff by name, designation, or contact..."
+                            value={staffSearchQuery}
+                            onChange={(e) => setStaffSearchQuery(e.target.value)}
+                            className="w-80 px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                          {staffSearchQuery && (
+                            <button
+                              onClick={() => setStaffSearchQuery('')}
+                              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {officeStaffData.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Details</th>
-                            {isAuthenticated && (
-                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {officeStaffData.map((staff, index) => (
-                            <tr key={staff.id} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                    <Users size={16} className="text-blue-600" />
-                                  </div>
-                                  <div className="text-sm font-medium text-gray-900">{staff.name}</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{staff.designation}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{staff.contactDetails}</td>
+                  {(() => {
+                    const filteredStaff = officeStaffData.filter(staff => {
+                      if (!isAuthenticated || !staffSearchQuery) return true;
+                      const searchLower = staffSearchQuery.toLowerCase();
+                      return (
+                        staff.name.toLowerCase().includes(searchLower) ||
+                        staff.designation.toLowerCase().includes(searchLower) ||
+                        staff.contactDetails.toLowerCase().includes(searchLower)
+                      );
+                    });
+
+                    if (officeStaffData.length === 0) {
+                      return (
+                        <div className="px-8 py-12 text-center">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users size={24} className="text-gray-400" />
+                          </div>
+                          <h4 className="text-lg font-semibold text-gray-600 mb-2">No Staff Members Available</h4>
+                          <p className="text-gray-500 mb-6">
+                            {isAuthenticated 
+                              ? "Use the form above to add the first staff member." 
+                              : "Staff information will be displayed here once added by the administrator."}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    if (filteredStaff.length === 0 && staffSearchQuery) {
+                      return (
+                        <div className="px-8 py-12 text-center">
+                          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Search size={24} className="text-orange-600" />
+                          </div>
+                          <h4 className="text-lg font-semibold text-gray-600 mb-2">No Results Found</h4>
+                          <p className="text-gray-500 mb-4">
+                            No staff members match your search: "<span className="font-semibold">{staffSearchQuery}</span>"
+                          </p>
+                          <button
+                            onClick={() => setStaffSearchQuery('')}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Clear Search
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Details</th>
                               {isAuthenticated && (
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button
-                                    onClick={() => handleDeleteStaff(staff.id)}
-                                    className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
-                                  >
-                                    <XCircle size={16} />
-                                    <span>Delete</span>
-                                  </button>
-                                </td>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                               )}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="px-8 py-12 text-center">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Users size={24} className="text-gray-400" />
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredStaff.map((staff, index) => (
+                              <tr key={staff.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {staff.imageUrl ? (
+                                    <img 
+                                      src={staff.imageUrl} 
+                                      alt={staff.name} 
+                                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                                      {staff.name.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                      <Users size={16} className="text-blue-600" />
+                                    </div>
+                                    <div className="text-sm font-medium text-gray-900">{staff.name}</div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{staff.designation}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{staff.contactDetails}</td>
+                                {isAuthenticated && (
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button
+                                      onClick={() => handleDeleteStaff(staff.id)}
+                                      className="text-red-600 hover:text-red-900 flex items-center space-x-1 transition-colors"
+                                    >
+                                      <XCircle size={16} />
+                                      <span>Delete</span>
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                      <h4 className="text-lg font-semibold text-gray-600 mb-2">No Staff Members Available</h4>
-                      <p className="text-gray-500 mb-6">
-                        {isAuthenticated 
-                          ? "Use the form above to add the first staff member." 
-                          : "Staff information will be displayed here once added by the administrator."}
-                      </p>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             </div>
